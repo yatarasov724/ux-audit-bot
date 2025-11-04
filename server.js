@@ -1,13 +1,11 @@
 const express = require('express');
-const index = require('./pages/index');
-const auditApi = require('./pages/api/audit');
-
 const app = express();
 const port = 3000;
 
-app.get('/', index);
-app.get('/api/audit', auditApi);
+app.get('/', (req, res) => {
+  res.send('UX Audit Bot is running');
+});
 
 app.listen(port, () => {
-  console.log(`UX Audit Bot running at http://localhost:${port}`);
+  console.log(`Server is running at http://localhost:${port}`);
 });
