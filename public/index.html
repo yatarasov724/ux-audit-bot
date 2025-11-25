@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Бот UX‑аудита</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      padding: 40px 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      padding: 60px 40px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 30px 20px;
+        border-radius: 16px;
+      }
+    }
+
+    h1 {
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      font-size: 2.5em;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 48px;
+      font-size: 1em;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2em;
+      }
+      .subtitle {
+        font-size: 1em;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #666;
+      font-weight: 400;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #urlInput {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+      background: white;
+    }
+
+    #urlInput:focus {
+      outline: none;
+      border-color: #000;
+    }
+
+    #urlInput::placeholder {
+      color: #999;
+    }
+
+    .platform-selector {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .platform-option {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .platform-option:hover {
+      border-color: #667eea;
+      background: #f5f7ff;
+    }
+
+    .platform-option input[type="radio"] {
+      display: none;
+    }
+
+    .platform-option input[type="radio"]:checked + label {
+      color: #667eea;
+    }
+
+    .platform-option.selected {
+      border-color: #667eea;
+      background: #f5f7ff;
+      color: #667eea;
+    }
+
+    .platform-option label {
+      cursor: pointer;
+      display: block;
+      margin: 0;
+    }
+
+    #checkButton {
+      padding: 14px 32px;
+      background: #000;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    #checkButton:hover:not(:disabled) {
+      background: #333;
+    }
+
+    #checkButton:active:not(:disabled) {
+      background: #000;
+    }
+
+    #checkButton:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #667eea;
+      display: none;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .loading p {
+      font-size: 14px;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #666;
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e0e0e0;
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .results {
+      display: none;
+    }
+
+    .results.active {
+      display: block;
+    }
+
+    .summary {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .summary-item {
+      display: inline-block;
+      margin-right: 20px;
+      color: #666;
+    }
+
+    .summary-item strong {
+      color: #333;
+    }
+
+    .platform-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 10px;
+    }
+
+    .platform-badge.web {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .platform-badge.mobile {
+      background: #f3e5f5;
+      color: #7b1fa2;
+    }
+
+    .criteria-section {
+      margin-top: 30px;
+    }
+
+    .criteria-title {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .criterion-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .criterion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .criterion-name {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .criterion-status {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .criterion-status.pass {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .criterion-status.issues {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .issues-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .issue-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #fff3e0;
+      border-left: 4px solid #ff9800;
+      border-radius: 4px;
+    }
+
+    .no-issues {
+      padding: 12px;
+      color: #2e7d32;
+      font-weight: 600;
+      background: #e8f5e9;
+      border-radius: 4px;
+    }
+
+    .error {
+      background: #fafafa;
+      color: #666;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-top: 16px;
+      display: none;
+      border: 1px solid #e0e0e0;
+    }
+
+    .error.active {
+      display: block;
+    }
+
+    .language-switcher {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .language-button {
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 400;
+      color: #666;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+
+    .language-button:hover {
+      border-color: #000;
+      color: #000;
+    }
+
+    .language-button.active {
+      background: #000;
+      color: white;
+      border-color: #000;
+    }
+
+    .container {
+      position: relative;
+    }
+
+    .lighthouse-scores {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .score-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 24px 20px;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+
+    .score-card:hover {
+      border-color: #000;
+    }
+
+    .score-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 12px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .score-value {
+      font-size: 3em;
+      font-weight: 600;
+      margin-bottom: 12px;
+      line-height: 1;
+      color: #1a1a1a;
+    }
+
+    .score-card.performance .score-value {
+      color: #1a1a1a;
+    }
+
+    .score-card.accessibility .score-value {
+      color: #1a1a1a;
+    }
+
+    .score-card.bestPractices .score-value {
+      color: #1a1a1a;
+    }
+
+    .score-card.seo .score-value {
+      color: #1a1a1a;
+    }
+
+    .score-bar {
+      height: 4px;
+      background: #f0f0f0;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .score-card.performance .score-bar-fill {
+      background: #000;
+    }
+
+    .score-card.accessibility .score-bar-fill {
+      background: #000;
+    }
+
+    .score-card.bestPractices .score-bar-fill {
+      background: #000;
+    }
+
+    .score-card.seo .score-bar-fill {
+      background: #000;
+    }
+
+    .issues-section {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .issues-section h2 {
+      font-size: 1.5em;
+      margin-bottom: 24px;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    .category-issues {
+      margin-bottom: 30px;
+    }
+
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: #fafafa;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 0.2s;
+      border: 1px solid #e0e0e0;
+    }
+
+    .category-header:hover {
+      background: #f5f5f5;
+    }
+
+    .category-header h3 {
+      margin: 0;
+      font-size: 1em;
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+
+    .issue-count {
+      background: #000;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .issue-count.zero {
+      background: #666;
+    }
+
+    .issues-list-container {
+      display: none;
+      padding: 0;
+    }
+
+    .issues-list-container.expanded {
+      display: block;
+    }
+
+    .issue-item-detailed {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .issue-item-detailed:hover {
+      border-color: #000;
+    }
+
+    .issue-title {
+      font-weight: 500;
+      font-size: 1em;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .issue-score-badge {
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .issue-score-badge.low {
+      background: #f5f5f5;
+      color: #666;
+    }
+
+    .issue-score-badge.medium {
+      background: #f5f5f5;
+      color: #666;
+    }
+
+    .issue-description {
+      color: #666;
+      font-size: 0.95em;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .issue-savings {
+      background: #f5f5f5;
+      color: #666;
+      padding: 6px 10px;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 400;
+      display: inline-block;
+      margin-top: 8px;
+    }
+
+    .expand-icon {
+      transition: transform 0.3s;
+    }
+
+    .category-header.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .audit-type-option:hover {
+      border-color: #667eea !important;
+      background: #f5f7ff !important;
+    }
+
+    .audit-type-option.selected {
+      border-color: #667eea !important;
+      background: #f5f7ff !important;
+    }
+
+    .audit-type-option:not(.selected) {
+      border-color: #e0e0e0 !important;
+      background: white !important;
+    }
+
+    @media (max-width: 768px) {
+      .audit-type-selector {
+        flex-direction: column !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="language-switcher">
+      <button class="language-button active" data-lang="ru">🇷🇺 RU</button>
+      <button class="language-button" data-lang="en">🇬🇧 EN</button>
+    </div>
+    <div style="text-align: center; margin-bottom: 50px;">
+      <h1 id="pageTitle">🎨 UX Audit Bot</h1>
+      <p class="subtitle" id="pageSubtitle">Проанализируйте пользовательский опыт вашего сайта</p>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 30px;">
+      <label id="auditTypeLabel" style="display: block; margin-bottom: 12px; color: #333; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Тип аудита</label>
+      <div class="audit-type-selector" style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div class="audit-type-option selected" data-type="ux" style="flex: 1; padding: 20px; border: 2px solid #667eea; border-radius: 8px; background: #f5f7ff; cursor: pointer; transition: all 0.3s;">
+          <div style="font-weight: 600; font-size: 1.1em; margin-bottom: 8px; color: #667eea;">🎨 UX Аудит</div>
+          <div style="font-size: 0.9em; color: #666; line-height: 1.5;">Анализ пользовательского опыта: визуальная иерархия, навигация, типографика, интерактивность, мобильная адаптивность, доступность</div>
+        </div>
+        <div class="audit-type-option" data-type="lighthouse" style="flex: 1; padding: 20px; border: 2px solid #e0e0e0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s;">
+          <div style="font-weight: 600; font-size: 1.1em; margin-bottom: 8px; color: #333;">⚡ Lighthouse</div>
+          <div style="font-size: 0.9em; color: #666; line-height: 1.5;">Технический аудит: производительность, SEO, безопасность, лучшие практики веб-разработки</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 30px;">
+      <label for="urlInput" id="urlLabel" style="display: block; margin-bottom: 12px; color: #333; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">URL сайта</label>
+      <input 
+        type="url" 
+        id="urlInput" 
+        placeholder="example.com или https://example.com"
+        value=""
+      >
+    </div>
+
+    <button id="checkButton">
+      <span id="checkButtonText">Запустить аудит</span>
+    </button>
+
+    <div class="loading" id="loading">
+      <p id="loadingText">🔍 Выполняется аудит...</p>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div class="results" id="results">
+      <div class="summary" id="summary"></div>
+      
+      <div class="criteria-section">
+        <h2 class="criteria-title" id="resultsTitle">Результаты аудита по критериям</h2>
+        <div id="criteria"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Current language (default: ru)
+    let currentLang = localStorage.getItem('language') || 'ru';
+    let translations = {};
+    // Current audit type (default: ux)
+    let currentAuditType = localStorage.getItem('auditType') || 'ux';
+
+    // Load translations
+    async function loadTranslations(lang) {
+      try {
+        console.log('Fetching translations for:', lang);
+        const response = await fetch(`/lang/${lang}.json`);
+        if (!response.ok) {
+          throw new Error(`Failed to load translations: ${response.status} ${response.statusText}`);
+        }
+        translations = await response.json();
+        console.log('Translations loaded:', translations);
+        currentLang = lang;
+        localStorage.setItem('language', lang);
+        updateUI();
+      } catch (err) {
+        console.error('Error loading translations:', err);
+        // Fallback to Russian if English fails
+        if (lang !== 'ru') {
+          console.log('Falling back to Russian');
+          loadTranslations('ru');
+        }
+      }
+    }
+
+    // Update UI with current translations
+    function updateUI() {
+      const t = translations.ui || {};
+      console.log('Updating UI with language:', currentLang, 'Translations:', t);
+      
+      const pageTitle = document.getElementById('pageTitle');
+      const pageSubtitle = document.getElementById('pageSubtitle');
+      const urlLabel = document.getElementById('urlLabel');
+      const platformLabel = document.getElementById('platformLabel');
+      const checkButton = document.getElementById('checkButton');
+      const checkButtonText = document.getElementById('checkButtonText');
+      const loadingText = document.getElementById('loadingText');
+      const resultsTitle = document.getElementById('resultsTitle');
+      
+      if (pageTitle) pageTitle.textContent = currentLang === 'ru' ? '🎨 UX Audit Bot' : '🎨 UX Audit Bot';
+      if (pageSubtitle) pageSubtitle.textContent = currentLang === 'ru' 
+        ? 'Проанализируйте пользовательский опыт вашего сайта'
+        : 'Analyze your website\'s user experience';
+      if (urlLabel) urlLabel.textContent = t.urlLabel || (currentLang === 'ru' ? 'URL сайта' : 'Website URL');
+      if (checkButtonText) checkButtonText.textContent = currentLang === 'ru' ? 'Запустить аудит' : 'Run Audit';
+      if (loadingText) loadingText.textContent = t.loading || (currentLang === 'ru' ? '🔍 Выполняется аудит...' : '🔍 Running audit...');
+      if (resultsTitle) resultsTitle.textContent = t.recommendationsTitle || (currentLang === 'ru' ? 'Рекомендации и проблемы' : 'Recommendations & Issues');
+      
+      document.documentElement.lang = currentLang;
+      document.title = t.title || (currentLang === 'ru' ? '🎨 UX Audit Bot' : '🎨 UX Audit Bot');
+      
+      // Update language buttons
+      document.querySelectorAll('.language-button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.lang === currentLang) {
+          btn.classList.add('active');
+        }
+      });
+      
+      console.log('UI updated successfully');
+    }
+
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, initializing...');
+      
+      // Set up language switcher FIRST, before loading translations
+      const languageButtons = document.querySelectorAll('.language-button');
+      console.log('Language buttons found:', languageButtons.length);
+      
+      if (languageButtons.length === 0) {
+        console.error('No language buttons found!');
+      } else {
+        languageButtons.forEach((btn, index) => {
+          console.log(`Setting up button ${index}:`, btn.dataset.lang, btn);
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const lang = this.dataset.lang;
+            console.log('Language button clicked:', lang, 'Current:', currentLang);
+            if (lang) {
+              if (lang !== currentLang) {
+                console.log('Loading translations for:', lang);
+                loadTranslations(lang);
+              } else {
+                console.log('Language already selected');
+              }
+            }
+          });
+        });
+      }
+      
+      // Load initial translations
+      loadTranslations(currentLang);
+      
+      // Set up audit type selector
+      const auditTypeOptions = document.querySelectorAll('.audit-type-option');
+      auditTypeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          auditTypeOptions.forEach(opt => opt.classList.remove('selected'));
+          this.classList.add('selected');
+          currentAuditType = this.dataset.type;
+          localStorage.setItem('auditType', currentAuditType);
+        });
+      });
+      
+      // Set initial audit type selection
+      auditTypeOptions.forEach(option => {
+        if (option.dataset.type === currentAuditType) {
+          option.classList.add('selected');
+        } else {
+          option.classList.remove('selected');
+        }
+      });
+      
+      const urlInput = document.getElementById('urlInput');
+      const checkButton = document.getElementById('checkButton');
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+      const error = document.getElementById('error');
+      const criteriaContainer = document.getElementById('criteria');
+      const summaryContainer = document.getElementById('summary');
+
+      if (!urlInput || !checkButton) {
+        console.error('Required elements not found');
+        return;
+      }
+
+      // Allow Enter key to trigger audit
+      urlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          runAudit();
+        }
+      });
+
+      // Set up button click handler
+      checkButton.addEventListener('click', runAudit);
+
+
+      function showLoading() {
+        if (loading) loading.classList.add('active');
+      }
+
+      function hideLoading() {
+        if (loading) loading.classList.remove('active');
+      }
+
+      function showError(message) {
+        if (error) {
+          const prefix = translations.ui?.errorPrefix || 'Error:';
+          error.textContent = `${prefix} ${message}`;
+          error.classList.add('active');
+        }
+      }
+
+      function hideError() {
+        if (error) error.classList.remove('active');
+      }
+
+      function hideResults() {
+        if (results) results.classList.remove('active');
+      }
+
+      function displayResults(data) {
+        if (!summaryContainer || !criteriaContainer) return;
+        
+        const t = translations.ui || {};
+        
+        // Check if this is UX audit data (has criteria array with criterionKey)
+        if (data.criteria && data.criteria.length > 0 && data.criteria[0].criterionKey) {
+          displayUXResults(data);
+          return;
+        }
+        
+        // Check if this is Lighthouse data
+        if (data.performance !== undefined || data.accessibility !== undefined) {
+          displayLighthouseResults(data);
+          return;
+        }
+        
+        // Display summary for regular audit
+        const platformClass = data.platform === 'mobile' ? 'mobile' : 'web';
+        const platformText = data.platform === 'mobile' 
+          ? (currentLang === 'ru' ? 'Мобильный' : 'Mobile')
+          : (currentLang === 'ru' ? 'Веб' : 'Web');
+        summaryContainer.innerHTML = `
+          <div class="summary-item">
+            <strong>${t.platform || 'Platform:'}</strong> 
+            <span class="platform-badge ${platformClass}">${platformText}</span>
+          </div>
+          <div class="summary-item">
+            <strong>${t.totalIssues || (currentLang === 'ru' ? 'Всего проблем:' : 'Total Issues:')}</strong> ${data.summary.totalIssues}
+          </div>
+          <div class="summary-item">
+            <strong>${t.criteriaWithIssues || (currentLang === 'ru' ? 'Критериев с проблемами:' : 'Criteria with Issues:')}</strong> ${data.summary.criteriaWithIssues} / ${data.summary.criteriaTotal}
+          </div>
+          <div class="summary-item">
+            <strong>${t.auditedUrl || (currentLang === 'ru' ? 'Проверенный URL:' : 'Audited URL:')}</strong> ${data.url}
+          </div>
+        `;
+
+        // Display criteria
+        if (data.criteria && data.criteria.length > 0) {
+          criteriaContainer.innerHTML = data.criteria
+            .map(criterion => {
+              const hasIssues = criterion.issues && criterion.issues.length > 0;
+              const statusClass = hasIssues ? 'issues' : 'pass';
+              const issueCount = criterion.issues.length;
+              const t = translations.ui || {};
+              let statusText;
+              if (hasIssues) {
+                if (currentLang === 'ru') {
+                  // Russian pluralization: 1, 21, 31... = "проблема", 2-4, 22-24... = "проблемы", 5-20, 25-30... = "проблем"
+                  let issueWord = t.issues || 'Проблемы';
+                  if (issueCount === 1 || (issueCount % 10 === 1 && issueCount % 100 !== 11)) {
+                    issueWord = t.issue || 'Проблема';
+                  } else if ((issueCount % 10 >= 2 && issueCount % 10 <= 4) && (issueCount % 100 < 10 || issueCount % 100 >= 20)) {
+                    issueWord = t.issues || 'Проблемы';
+                  }
+                  statusText = `${issueCount} ${issueWord}`;
+                } else {
+                  // English pluralization
+                  const issueWord = issueCount === 1 ? (t.issue || 'Issue') : (t.issues || 'Issues');
+                  statusText = `${issueCount} ${issueWord}`;
+                }
+              } else {
+                statusText = t.noIssues || (currentLang === 'ru' ? 'Проблем не найдено' : 'No issues found');
+              }
+
+              return `
+                <div class="criterion-card">
+                  <div class="criterion-header">
+                    <div class="criterion-name">${criterion.criterion}</div>
+                    <div class="criterion-status ${statusClass}">${statusText}</div>
+                  </div>
+                  ${hasIssues ? `
+                    <ul class="issues-list">
+                      ${criterion.issues.map(issue => `
+                        <li class="issue-item">${issue}</li>
+                      `).join('')}
+                    </ul>
+                  ` : `
+                    <div class="no-issues">✅ ${translations.ui?.noIssues || (currentLang === 'ru' ? 'Проблем не найдено' : 'No issues found')}</div>
+                  `}
+                </div>
+              `;
+            })
+            .join('');
+        } else {
+          criteriaContainer.innerHTML = `<p>${translations.ui?.noCriteriaData || (currentLang === 'ru' ? 'Данные по критериям недоступны.' : 'No criteria data available.')}</p>`;
+        }
+
+        results.classList.add('active');
+      }
+
+      function displayUXResults(data) {
+        const t = translations.ui || {};
+        
+        // Display summary
+        summaryContainer.innerHTML = `
+          <div class="summary-item">
+            <strong>${t.auditedUrl || 'Проверенный URL:'}</strong> ${data.url}
+          </div>
+          <div class="summary-item">
+            <strong>${t.timestamp || 'Время проверки:'}</strong> ${new Date(data.timestamp).toLocaleString(currentLang === 'ru' ? 'ru-RU' : 'en-US')}
+          </div>
+          ${data.summary ? `
+            <div class="summary-item">
+              <strong>${t.totalIssues || 'Всего проблем:'}</strong> ${data.summary.totalIssues}
+            </div>
+            <div class="summary-item">
+              <strong>${t.criteriaWithIssues || 'Критериев с проблемами:'}</strong> ${data.summary.criteriaWithIssues} / ${data.summary.criteriaTotal}
+            </div>
+            <div class="summary-item">
+              <strong>${currentLang === 'ru' ? 'Общий балл:' : 'Overall Score:'}</strong> ${data.summary.averageScore}/100
+            </div>
+          ` : ''}
+        `;
+
+        // Display criteria with scores
+        if (data.criteria && data.criteria.length > 0) {
+          criteriaContainer.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+              ${data.criteria.map(criterion => {
+                const score = criterion.score || 0;
+                const scoreColor = score >= 80 ? '#2e7d32' : score >= 60 ? '#f57c00' : '#d32f2f';
+                return `
+                  <div class="score-card" style="border-color: ${scoreColor};">
+                    <div class="score-label">${criterion.criterion}</div>
+                    <div class="score-value" style="color: ${scoreColor};">${score}</div>
+                    <div class="score-bar">
+                      <div class="score-bar-fill" style="width: ${score}%; background: ${scoreColor};"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <div class="issues-section">
+              <h2 style="margin-bottom: 20px; color: #333;">${t.recommendationsTitle || (currentLang === 'ru' ? 'Детальный анализ' : 'Detailed Analysis')}</h2>
+              ${data.criteria.map(criterion => {
+                const hasIssues = criterion.issues && criterion.issues.length > 0;
+                const statusClass = hasIssues ? 'issues' : 'pass';
+                const issueCount = criterion.issues.length;
+                
+                let statusText;
+                if (hasIssues) {
+                  if (currentLang === 'ru') {
+                    const issueWord = issueCount === 1 || (issueCount % 10 === 1 && issueCount % 100 !== 11) 
+                      ? 'Проблема' 
+                      : (issueCount % 10 >= 2 && issueCount % 10 <= 4) && (issueCount % 100 < 10 || issueCount % 100 >= 20)
+                      ? 'Проблемы'
+                      : 'Проблем';
+                    statusText = `${issueCount} ${issueWord}`;
+                  } else {
+                    const issueWord = issueCount === 1 ? 'Issue' : 'Issues';
+                    statusText = `${issueCount} ${issueWord}`;
+                  }
+                } else {
+                  statusText = t.noIssues || (currentLang === 'ru' ? 'Проблем не найдено' : 'No issues found');
+                }
+
+                return `
+                  <div class="criterion-card">
+                    <div class="criterion-header">
+                      <div class="criterion-name">${criterion.criterion}</div>
+                      <div class="criterion-status ${statusClass}">${statusText}</div>
+                    </div>
+                    ${hasIssues ? `
+                      <ul class="issues-list">
+                        ${criterion.issues.map(issue => `
+                          <li class="issue-item">${issue}</li>
+                        `).join('')}
+                      </ul>
+                    ` : `
+                      <div class="no-issues">✅ ${t.noIssues || (currentLang === 'ru' ? 'Проблем не найдено' : 'No issues found')}</div>
+                    `}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        } else {
+          criteriaContainer.innerHTML = `<p>${t.noCriteriaData || (currentLang === 'ru' ? 'Данные по критериям недоступны.' : 'No criteria data available.')}</p>`;
+        }
+
+        results.classList.add('active');
+      }
+
+      function displayLighthouseResults(data) {
+        const t = translations.ui || {};
+        
+        summaryContainer.innerHTML = `
+          <div class="summary-item">
+            <strong>${t.auditedUrl || 'Проверенный URL:'}</strong> ${data.url}
+          </div>
+          <div class="summary-item">
+            <strong>${t.timestamp || 'Время проверки:'}</strong> ${new Date(data.timestamp).toLocaleString(currentLang === 'ru' ? 'ru-RU' : 'en-US')}
+          </div>
+        `;
+
+        const scoreLabels = {
+          performance: currentLang === 'ru' ? 'Производительность' : 'Performance',
+          accessibility: currentLang === 'ru' ? 'Доступность' : 'Accessibility',
+          bestPractices: currentLang === 'ru' ? 'Лучшие практики' : 'Best Practices',
+          seo: currentLang === 'ru' ? 'SEO' : 'SEO'
+        };
+
+        const expandText = t.expand || (currentLang === 'ru' ? 'Развернуть' : 'Expand');
+        const collapseText = t.collapse || (currentLang === 'ru' ? 'Свернуть' : 'Collapse');
+        const noIssuesText = t.noIssues || (currentLang === 'ru' ? 'Проблем не найдено' : 'No issues found');
+        const savingsText = t.potentialSavings || (currentLang === 'ru' ? 'Потенциальная экономия' : 'Potential savings');
+
+        function renderIssues(categoryKey, issues, categoryName) {
+          if (!issues || issues.length === 0) {
+            return `
+              <div class="category-issues">
+                <div class="category-header">
+                  <h3>${categoryName}</h3>
+                  <span class="issue-count zero">0</span>
+                </div>
+                <div class="issues-list-container">
+                  <div style="padding: 15px; color: #28a745; font-weight: 600;">
+                    ✅ ${noIssuesText}
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          const issuesHtml = issues.map(issue => {
+            let scoreBadge = '';
+            if (issue.score !== null) {
+              const scoreClass = issue.score < 50 ? 'low' : 'medium';
+              scoreBadge = `<span class="issue-score-badge ${scoreClass}">${issue.score}/100</span>`;
+            }
+
+            let savingsHtml = '';
+            if (issue.savings) {
+              const savingsValue = issue.savings > 1000 
+                ? `${(issue.savings / 1000).toFixed(1)}${currentLang === 'ru' ? 'с' : 's'}`
+                : `${issue.savings}${currentLang === 'ru' ? 'мс' : 'ms'}`;
+              savingsHtml = `<div class="issue-savings">${savingsText}: ${savingsValue}</div>`;
+            }
+            if (issue.savingsBytes) {
+              const bytesValue = issue.savingsBytes > 1024 * 1024
+                ? `${(issue.savingsBytes / (1024 * 1024)).toFixed(1)} ${currentLang === 'ru' ? 'МБ' : 'MB'}`
+                : issue.savingsBytes > 1024
+                ? `${(issue.savingsBytes / 1024).toFixed(1)} ${currentLang === 'ru' ? 'КБ' : 'KB'}`
+                : `${issue.savingsBytes} ${currentLang === 'ru' ? 'Б' : 'B'}`;
+              savingsHtml += `<div class="issue-savings" style="margin-left: 8px;">${bytesValue}</div>`;
+            }
+
+            return `
+              <div class="issue-item-detailed">
+                <div class="issue-title">
+                  ${issue.title}
+                  ${scoreBadge}
+                </div>
+                ${issue.description ? `<div class="issue-description">${issue.description}</div>` : ''}
+                ${issue.displayValue ? `<div style="color: #667eea; font-weight: 600; margin-top: 5px;">${issue.displayValue}</div>` : ''}
+                ${savingsHtml}
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div class="category-issues">
+              <div class="category-header" onclick="this.classList.toggle('expanded'); this.nextElementSibling.classList.toggle('expanded');">
+                <h3>${categoryName}</h3>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span class="issue-count">${issues.length}</span>
+                  <span class="expand-icon">▼</span>
+                </div>
+              </div>
+              <div class="issues-list-container">
+                ${issuesHtml}
+              </div>
+            </div>
+          `;
+        }
+
+        criteriaContainer.innerHTML = `
+          <div class="lighthouse-scores">
+            <div class="score-card performance">
+              <div class="score-label">${scoreLabels.performance}</div>
+              <div class="score-value">${data.performance}</div>
+              <div class="score-bar">
+                <div class="score-bar-fill" style="width: ${data.performance}%"></div>
+              </div>
+            </div>
+            <div class="score-card accessibility">
+              <div class="score-label">${scoreLabels.accessibility}</div>
+              <div class="score-value">${data.accessibility}</div>
+              <div class="score-bar">
+                <div class="score-bar-fill" style="width: ${data.accessibility}%"></div>
+              </div>
+            </div>
+            <div class="score-card bestPractices">
+              <div class="score-label">${scoreLabels.bestPractices}</div>
+              <div class="score-value">${data.bestPractices}</div>
+              <div class="score-bar">
+                <div class="score-bar-fill" style="width: ${data.bestPractices}%"></div>
+              </div>
+            </div>
+            <div class="score-card seo">
+              <div class="score-label">${scoreLabels.seo}</div>
+              <div class="score-value">${data.seo}</div>
+              <div class="score-bar">
+                <div class="score-bar-fill" style="width: ${data.seo}%"></div>
+              </div>
+            </div>
+          </div>
+          ${data.issues ? `
+            <div class="issues-section">
+              <h2 style="margin-bottom: 20px; color: #333;">${t.recommendationsTitle || (currentLang === 'ru' ? 'Рекомендации и проблемы' : 'Recommendations & Issues')}</h2>
+              ${renderIssues('performance', data.issues.performance, scoreLabels.performance)}
+              ${renderIssues('accessibility', data.issues.accessibility, scoreLabels.accessibility)}
+              ${renderIssues('bestPractices', data.issues.bestPractices, scoreLabels.bestPractices)}
+              ${renderIssues('seo', data.issues.seo, scoreLabels.seo)}
+            </div>
+          ` : ''}
+        `;
+
+        results.classList.add('active');
+      }
+
+      async function runAudit() {
+        const url = urlInput.value.trim();
+        
+        if (!url) {
+          showError(translations.ui?.pleaseEnterUrl || 'Please enter a URL');
+          return;
+        }
+
+        // Reset UI
+        hideError();
+        hideResults();
+        showLoading();
+        checkButton.disabled = true;
+        const buttonText = document.getElementById('checkButtonText');
+        if (buttonText) buttonText.textContent = currentLang === 'ru' ? 'Выполняется аудит...' : 'Running audit...';
+
+        try {
+          // Choose API endpoint based on audit type
+          const apiEndpoint = currentAuditType === 'ux' 
+            ? `/api/ux-audit?url=${encodeURIComponent(url)}&lang=${currentLang}`
+            : `/api/lighthouse?url=${encodeURIComponent(url)}&lang=${currentLang}`;
+          
+          const response = await fetch(apiEndpoint);
+          
+          // Check if response is JSON
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response:', text.substring(0, 200));
+            throw new Error(currentLang === 'ru' 
+              ? 'Сервер вернул неверный формат ответа. Убедитесь, что сервер запущен и работает корректно.'
+              : 'Server returned invalid response format. Make sure the server is running correctly.');
+          }
+          
+          const data = await response.json();
+
+          if (!response.ok) {
+            const errorMsg = data.details 
+              ? `${data.error || 'Audit failed'}: ${data.details}`
+              : (data.error || translations.ui?.auditFailed || 'Audit failed');
+            throw new Error(errorMsg);
+          }
+
+          displayResults(data);
+        } catch (err) {
+          console.error('Audit error:', err);
+          let errorMessage = err.message;
+          
+          // Handle JSON parse errors
+          if (err.message && err.message.includes('JSON')) {
+            errorMessage = currentLang === 'ru'
+              ? 'Ошибка при обработке ответа сервера. Убедитесь, что сервер запущен и работает корректно.'
+              : 'Error processing server response. Make sure the server is running correctly.';
+          }
+          
+          showError(errorMessage || translations.ui?.auditFailed || 'Audit failed');
+        } finally {
+          hideLoading();
+          checkButton.disabled = false;
+          const buttonText = document.getElementById('checkButtonText');
+          if (buttonText) buttonText.textContent = currentLang === 'ru' ? 'Запустить аудит' : 'Run Audit';
+        }
+      }
+    }); // End of DOMContentLoaded
+  </script>
+</body>
+</html>

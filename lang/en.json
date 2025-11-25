@@ -1,0 +1,138 @@
+{
+  "ui": {
+    "title": "⚡ Lighthouse Audit",
+    "subtitle": "Analyze your website's performance, accessibility, best practices, and SEO",
+    "urlLabel": "Website URL",
+    "urlPlaceholder": "https://example.com",
+    "platformLabel": "Platform",
+    "platformWeb": "🌐 Web (Desktop)",
+    "platformMobile": "📱 Mobile",
+    "checkButton": "Run Audit",
+    "loading": "🔍 Running audit...",
+    "errorPrefix": "Error:",
+    "pleaseEnterUrl": "Please enter a URL",
+    "auditFailed": "Audit failed",
+    "resultsTitle": "Audit Results by Criteria",
+    "platform": "Platform:",
+    "totalIssues": "Total Issues:",
+    "criteriaWithIssues": "Criteria with Issues:",
+    "auditedUrl": "Audited URL:",
+    "noIssues": "No issues found",
+    "issue": "Issue",
+    "issues": "Issues",
+    "noCriteriaData": "No criteria data available.",
+    "changeLanguage": "Change Language",
+    "auditTypeLabel": "Audit Type",
+    "auditRegular": "📋 Regular Audit",
+    "auditLighthouse": "⚡ Lighthouse",
+    "timestamp": "Timestamp:",
+    "recommendationsTitle": "Recommendations & Issues",
+    "potentialSavings": "Potential savings",
+    "expand": "Expand",
+    "collapse": "Collapse"
+  },
+  "api": {
+    "missingUrl": "Missing URL",
+    "auditFailed": "Audit failed",
+    "missingUrlParameter": "Missing URL parameter",
+    "invalidPlatform": "Platform must be \"web\" or \"mobile\""
+  },
+  "server": {
+    "running": "UX Audit Bot is running at http://localhost:3000"
+  },
+  "issues": {
+    "Layout & Structure": {
+      "contentWidthExceeds": "Content width exceeds screen on desktop",
+      "horizontalScrolling": "Horizontal scrolling present on mobile",
+      "inconsistentSpacing": "Inconsistent spacing between sections"
+    },
+    "Navigation": {
+      "noStickyHeader": "No sticky header/menu",
+      "hamburgerMenuMissing": "Hamburger menu missing or hard to tap",
+      "confusingHierarchy": "Confusing menu hierarchy"
+    },
+    "Typography & Readability": {
+      "fontSizeTooSmall": "Font size too small (<14px)",
+      "poorReadability": "Poor readability on small screens",
+      "insufficientLineSpacing": "Insufficient line spacing"
+    },
+    "Accessibility": {
+      "missingAltText": "Missing alt text on images",
+      "lowContrast": "Low contrast ratio (below WCAG AA)",
+      "noKeyboardNav": "No keyboard navigation support"
+    },
+    "Mobile-specific": {
+      "tapTargetsTooSmall": "Tap targets too small (<48px)",
+      "viewportMissing": "Viewport meta tag missing",
+      "noResponsiveLayout": "No responsive layout"
+    },
+    "Visual hierarchy": {
+      "inconsistentHeadings": "Inconsistent heading sizes",
+      "noClearCTA": "No clear CTA (call to action)",
+      "overuseOfBold": "Overuse of bold or color"
+    }
+  },
+  "criteria": {
+    "Layout & Structure": "Layout & Structure",
+    "Navigation": "Navigation",
+    "Typography & Readability": "Typography & Readability",
+    "Accessibility": "Accessibility",
+    "Mobile-specific": "Mobile-specific",
+    "Visual hierarchy": "Visual hierarchy"
+  },
+  "lighthouse": {
+    "unused-javascript": {
+      "title": "Reduce unused JavaScript",
+      "description": "Remove unused JavaScript or defer loading scripts until they are required. This decreases bytes consumed by network activity."
+    },
+    "unused-css-rules": {
+      "title": "Reduce unused CSS",
+      "description": "Remove unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity."
+    },
+    "render-blocking-insight": {
+      "title": "Render blocking requests",
+      "description": "Some requests are blocking the page's initial render, which may delay the main content. Defer or inline these resources."
+    },
+    "unsized-images": {
+      "title": "Image elements do not have explicit width and height",
+      "description": "Set explicit width and height on image elements to reduce layout shifts and improve CLS metric."
+    },
+    "landmark-one-main": {
+      "title": "Document does not have a main landmark",
+      "description": "One main landmark helps screen reader users navigate a web page."
+    },
+    "link-in-text-block": {
+      "title": "Links rely on color to be distinguishable",
+      "description": "Low-contrast link text is difficult or impossible for many users to read. Links should be distinguishable not only by color."
+    },
+    "label-content-name-mismatch": {
+      "title": "Elements with visible text labels do not have matching accessible names",
+      "description": "Visible text labels that do not match the accessible name can result in a confusing experience for screen reader users."
+    },
+    "charset": {
+      "title": "Charset declaration is missing or occurs too late",
+      "description": "A character encoding declaration is required. It can be done with a meta tag in the first 1024 bytes of HTML or in the Content-Type HTTP response header."
+    },
+    "errors-in-console": {
+      "title": "Browser errors were logged to the console",
+      "description": "Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser concerns."
+    },
+    "csp-xss": {
+      "title": "Ensure CSP is effective against XSS attacks",
+      "description": "A strong Content Security Policy (CSP) significantly reduces the risk of cross-site scripting attacks."
+    },
+    "has-hsts": {
+      "title": "Use a strong HSTS policy",
+      "description": "Deployment of the HSTS header significantly reduces the risk of downgrading HTTP connections and eavesdropping attacks."
+    },
+    "meta-description": {
+      "title": "Document does not have a meta description",
+      "description": "Meta descriptions may be included in search results to concisely summarize page content."
+    },
+    "link-text": {
+      "title": "Links do not have descriptive text",
+      "description": "Descriptive link text helps search engines understand your content."
+    }
+  }
+}
+
