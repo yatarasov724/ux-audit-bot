@@ -1,24 +1,9 @@
 const express = require('express');
 const path = require('path');
 
-// Load utilities with error handling
-let runAudit, runLighthouse, runUXAudit;
-try {
-  const auditUtils = require('./utils/audit');
-  runAudit = auditUtils.runAudit;
-  runLighthouse = auditUtils.runLighthouse;
-} catch (err) {
-  console.error('Error loading audit utils:', err);
-  // Will be handled when endpoints are called
-}
-
-try {
-  const uxAuditUtils = require('./utils/ux-audit');
-  runUXAudit = uxAuditUtils.runUXAudit;
-} catch (err) {
-  console.error('Error loading UX audit utils:', err);
-  // Will be handled when endpoints are called
-}
+// Load utilities - lighthouse is loaded dynamically, so no errors on startup
+const { runAudit, runLighthouse } = require('./utils/audit');
+const { runUXAudit } = require('./utils/ux-audit');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -68,9 +53,6 @@ app.get('/api/audit', async (req, res) => {
   }
 
   try {
-    if (!runAudit) {
-      throw new Error('Audit module not loaded');
-    }
     const result = await runAudit(normalizedUrl, platform, validLang);
     res.status(200).json(result);
   } catch (err) {
@@ -94,9 +76,6 @@ app.get('/api/lighthouse', async (req, res) => {
   const normalizedUrl = normalizeUrl(url);
 
   try {
-    if (!runLighthouse) {
-      throw new Error('Lighthouse module not loaded');
-    }
     console.log(`Starting Lighthouse audit for: ${normalizedUrl}`);
     const result = await runLighthouse(normalizedUrl, validLang);
     console.log(`Lighthouse audit completed for: ${normalizedUrl}`);
@@ -126,9 +105,6 @@ app.get('/api/ux-audit', async (req, res) => {
   const normalizedUrl = normalizeUrl(url);
 
   try {
-    if (!runUXAudit) {
-      throw new Error('UX audit module not loaded');
-    }
     console.log(`Starting UX audit for: ${normalizedUrl}`);
     const result = await runUXAudit(normalizedUrl, validLang);
     console.log(`UX audit completed for: ${normalizedUrl}`);

@@ -1,4 +1,3 @@
-const lighthouse = require('lighthouse');
 const chromeLauncher = require('chrome-launcher');
 
 // Normalize URL - add https:// if protocol is missing
@@ -69,6 +68,9 @@ async function runLighthouse(url, lang = 'ru') {
     }
 
     console.log(`Chrome launched on port ${chrome.port}`);
+
+    // Dynamically import Lighthouse (ES module)
+    const lighthouse = await import('lighthouse');
 
     // Run Lighthouse
     const options = {
