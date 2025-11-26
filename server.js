@@ -1,12 +1,36 @@
 const express = require('express');
 const path = require('path');
 
-// Load utilities - lighthouse is loaded dynamically, so no errors on startup
-const { runAudit, runLighthouse } = require('./utils/audit');
-const { runUXAudit } = require('./utils/ux-audit');
+console.log('Starting server initialization...');
+
+// Load utilities with error handling
+let runAudit, runLighthouse, runUXAudit;
+
+try {
+  console.log('Loading audit utils...');
+  const auditUtils = require('./utils/audit');
+  runAudit = auditUtils.runAudit;
+  runLighthouse = auditUtils.runLighthouse;
+  console.log('Audit utils loaded successfully');
+} catch (err) {
+  console.error('Error loading audit utils:', err);
+  // Server will still start, but audit endpoints will fail gracefully
+}
+
+try {
+  console.log('Loading UX audit utils...');
+  const uxAuditUtils = require('./utils/ux-audit');
+  runUXAudit = uxAuditUtils.runUXAudit;
+  console.log('UX audit utils loaded successfully');
+} catch (err) {
+  console.error('Error loading UX audit utils:', err);
+  // Server will still start, but UX audit endpoint will fail gracefully
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+console.log(`Server port: ${port}`);
 
 // Increase timeout for Lighthouse requests (can take 30-60 seconds)
 app.use(express.json({ limit: '10mb' }));
@@ -53,6 +77,9 @@ app.get('/api/audit', async (req, res) => {
   }
 
   try {
+    if (!runAudit) {
+      return res.status(503).json({ error: 'Audit service is not available', details: 'Module not loaded' });
+    }
     const result = await runAudit(normalizedUrl, platform, validLang);
     res.status(200).json(result);
   } catch (err) {
@@ -76,6 +103,9 @@ app.get('/api/lighthouse', async (req, res) => {
   const normalizedUrl = normalizeUrl(url);
 
   try {
+    if (!runLighthouse) {
+      return res.status(503).json({ error: 'Lighthouse service is not available', details: 'Module not loaded' });
+    }
     console.log(`Starting Lighthouse audit for: ${normalizedUrl}`);
     const result = await runLighthouse(normalizedUrl, validLang);
     console.log(`Lighthouse audit completed for: ${normalizedUrl}`);
@@ -105,6 +135,9 @@ app.get('/api/ux-audit', async (req, res) => {
   const normalizedUrl = normalizeUrl(url);
 
   try {
+    if (!runUXAudit) {
+      return res.status(503).json({ error: 'UX audit service is not available', details: 'Module not loaded' });
+    }
     console.log(`Starting UX audit for: ${normalizedUrl}`);
     const result = await runUXAudit(normalizedUrl, validLang);
     console.log(`UX audit completed for: ${normalizedUrl}`);
@@ -119,9 +152,19 @@ app.get('/api/ux-audit', async (req, res) => {
   }
 });
 
-// Healthcheck endpoint (simple and fast)
+// Healthcheck endpoint (simple and fast) - should be first to respond quickly
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  console.log('Healthcheck called');
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    port: port,
+    modules: {
+      audit: !!runAudit,
+      lighthouse: !!runLighthouse,
+      uxAudit: !!runUXAudit
+    }
+  });
 });
 
 // Serve static files AFTER API routes
@@ -145,13 +188,36 @@ app.use((err, req, res, next) => {
 });
 
 // Start server with error handling
+console.log('Setting up server routes...');
+
+// Handle uncaught errors
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  // Don't exit, let the server try to continue
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit, let the server try to continue
+});
+
 try {
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Бот UX‑аудита запущен на http://0.0.0.0:${port}`);
+  console.log(`Attempting to start server on port ${port}...`);
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`✅ Бот UX‑аудита запущен на http://0.0.0.0:${port}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`PORT: ${port}`);
+    console.log('Server is ready to accept connections');
+  });
+
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use`);
+    }
   });
 } catch (err) {
   console.error('Failed to start server:', err);
+  console.error('Error stack:', err.stack);
   process.exit(1);
 }
