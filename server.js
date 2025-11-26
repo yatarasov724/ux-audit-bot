@@ -30,18 +30,25 @@ try {
 const app = express();
 
 // Get port from environment - Railway sets this automatically
-// IMPORTANT: Railway sets PORT automatically, don't override it!
-// If PORT is set in Railway Variables, it will override the automatic one
-const port = parseInt(process.env.PORT, 10);
+// If PORT is set in Railway Variables, it will be used
+// Otherwise, Railway will set it automatically (usually 8080)
+// Default to 3000 only if PORT is not set (shouldn't happen in Railway)
+const port = parseInt(process.env.PORT, 10) || 3000;
 
-// Validate port - PORT must be set by Railway
+// Validate port
 if (!port || isNaN(port) || port < 1 || port > 65535) {
-  console.error('❌ PORT environment variable is not set or invalid!');
+  console.error('❌ PORT environment variable is invalid!');
   console.error('PORT value:', process.env.PORT);
   console.error('PORT parsed:', port);
-  console.error('All environment variables:', Object.keys(process.env).filter(k => k.includes('PORT')));
-  console.error('Please ensure Railway sets PORT automatically or set it in Variables');
   process.exit(1);
+}
+
+// Warn if using default port (shouldn't happen in Railway)
+if (!process.env.PORT) {
+  console.warn('⚠️  WARNING: PORT environment variable is not set, using default 3000');
+  console.warn('⚠️  This should not happen in Railway - check your Variables settings');
+} else {
+  console.log(`✅ Using PORT from environment: ${process.env.PORT}`);
 }
 
 console.log(`✅ Server port: ${port}`);
