@@ -73,18 +73,29 @@ async function runLighthouse(url, lang = 'ru') {
     
     // Launch Chrome in headless mode with additional flags for Railway/Docker
     console.log('[Lighthouse] Launching Chrome...');
+    console.log('[Lighthouse] CHROME_PATH:', process.env.CHROME_PATH);
+    console.log('[Lighthouse] CHROME_BIN:', process.env.CHROME_BIN);
+    
+    const chromeOptions = {
+      chromeFlags: [
+        '--headless',
+        '--no-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-setuid-sandbox',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process'
+      ]
+    };
+    
+    // Use system Chrome if available (from Dockerfile)
+    if (process.env.CHROME_PATH || process.env.CHROME_BIN) {
+      chromeOptions.chromePath = process.env.CHROME_PATH || process.env.CHROME_BIN;
+      console.log('[Lighthouse] Using system Chrome from:', chromeOptions.chromePath);
+    }
+    
     try {
-      chrome = await chromeLauncher.default.launch({
-        chromeFlags: [
-          '--headless',
-          '--no-sandbox',
-          '--disable-gpu',
-          '--disable-dev-shm-usage',
-          '--disable-setuid-sandbox',
-          '--disable-web-security',
-          '--disable-features=IsolateOrigins,site-per-process'
-        ]
-      });
+      chrome = await chromeLauncher.default.launch(chromeOptions);
     } catch (err) {
       console.error('[Lighthouse] Error launching Chrome:', err);
       throw new Error(`Failed to launch Chrome: ${err.message}`);
