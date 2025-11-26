@@ -36,18 +36,17 @@ RUN npm ci --only=production
 # Copy application files
 COPY . .
 
-# Set environment variables for Puppeteer
+# Set environment variables for Puppeteer and Chrome Launcher
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV CHROME_PATH=/usr/bin/chromium
+ENV CHROME_BIN=/usr/bin/chromium
 ENV NODE_ENV=production
 
-# Expose port
-EXPOSE 3000
+# Expose port (Railway will set PORT env var, default to 8080)
+EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# Note: Railway handles healthcheck via railway.json
 
 # Start the application
 CMD ["node", "server.js"]
