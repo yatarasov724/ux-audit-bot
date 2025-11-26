@@ -28,17 +28,20 @@ try {
 }
 
 const app = express();
-const port = process.env.PORT || 3000;
+
+// Get port from environment - Railway sets this automatically
+const port = parseInt(process.env.PORT, 10) || 3000;
 
 // Validate port
-if (!port || isNaN(port)) {
-  console.error('Invalid PORT:', port);
+if (!port || isNaN(port) || port < 1 || port > 65535) {
+  console.error('Invalid PORT:', process.env.PORT, '->', port);
   process.exit(1);
 }
 
 console.log(`Server port: ${port}`);
+console.log(`PORT environment variable: ${process.env.PORT}`);
 console.log(`PORT type: ${typeof port}`);
-console.log(`PORT value: ${port}`);
+console.log(`PORT parsed value: ${port}`);
 
 // Request logging middleware - log ALL requests
 app.use((req, res, next) => {
