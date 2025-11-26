@@ -1,4 +1,4 @@
-const chromeLauncher = require('chrome-launcher');
+// chrome-launcher is an ES module, will be imported dynamically
 
 // Normalize URL - add https:// if protocol is missing
 function normalizeUrl(url) {
@@ -57,9 +57,12 @@ async function runLighthouse(url, lang = 'ru') {
       throw new Error(`Invalid URL format: ${url}`);
     }
 
+    // Dynamically import chrome-launcher (ES module)
+    const chromeLauncher = await import('chrome-launcher');
+    
     // Launch Chrome in headless mode
     console.log('Launching Chrome...');
-    chrome = await chromeLauncher.launch({
+    chrome = await chromeLauncher.default.launch({
       chromeFlags: ['--headless', '--no-sandbox', '--disable-gpu']
     });
 
