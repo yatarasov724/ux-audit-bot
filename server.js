@@ -179,11 +179,7 @@ app.get('/health', (req, res) => {
   }
 });
 
-// Serve static files AFTER API routes
-app.use('/lang', express.static('lang')); // Serve translation files
-app.use(express.static('public')); // Serve static files from public directory
-
-// Serve index.html for root route (fallback)
+// Serve index.html for root route FIRST (before static files)
 app.get('/', (req, res) => {
   try {
     const indexPath = path.join(__dirname, 'public', 'index.html');
@@ -200,16 +196,24 @@ app.get('/', (req, res) => {
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('Error sending index.html:', err);
-        res.status(500).send('Error loading page: ' + err.message);
+        if (!res.headersSent) {
+          res.status(500).send('Error loading page: ' + err.message);
+        }
       } else {
         console.log('index.html sent successfully');
       }
     });
   } catch (err) {
     console.error('Error serving index.html:', err);
-    res.status(500).send('Error loading page: ' + err.message);
+    if (!res.headersSent) {
+      res.status(500).send('Error loading page: ' + err.message);
+    }
   }
 });
+
+// Serve static files AFTER API routes and root route
+app.use('/lang', express.static('lang')); // Serve translation files
+app.use(express.static('public')); // Serve static files from public directory
 
 // Error handling middleware
 app.use((err, req, res, next) => {
