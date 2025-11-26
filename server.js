@@ -32,6 +32,12 @@ const port = process.env.PORT || 3000;
 
 console.log(`Server port: ${port}`);
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+  next();
+});
+
 // Increase timeout for Lighthouse requests (can take 30-60 seconds)
 app.use(express.json({ limit: '10mb' }));
 
@@ -155,16 +161,22 @@ app.get('/api/ux-audit', async (req, res) => {
 // Healthcheck endpoint (simple and fast) - should be first to respond quickly
 app.get('/health', (req, res) => {
   console.log('Healthcheck called');
-  res.status(200).json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    port: port,
-    modules: {
-      audit: !!runAudit,
-      lighthouse: !!runLighthouse,
-      uxAudit: !!runUXAudit
-    }
-  });
+  try {
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      port: port,
+      modules: {
+        audit: !!runAudit,
+        lighthouse: !!runLighthouse,
+        uxAudit: !!runUXAudit
+      }
+    });
+    console.log('Healthcheck response sent');
+  } catch (err) {
+    console.error('Error in healthcheck:', err);
+    res.status(500).json({ error: 'Healthcheck failed', message: err.message });
+  }
 });
 
 // Serve static files AFTER API routes
@@ -174,10 +186,28 @@ app.use(express.static('public')); // Serve static files from public directory
 // Serve index.html for root route (fallback)
 app.get('/', (req, res) => {
   try {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    console.log('__dirname:', __dirname);
+    
+    // Check if file exists
+    const fs = require('fs');
+    if (!fs.existsSync(indexPath)) {
+      console.error('index.html not found at:', indexPath);
+      return res.status(404).send('index.html not found');
+    }
+    
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error sending index.html:', err);
+        res.status(500).send('Error loading page: ' + err.message);
+      } else {
+        console.log('index.html sent successfully');
+      }
+    });
   } catch (err) {
     console.error('Error serving index.html:', err);
-    res.status(500).send('Error loading page');
+    res.status(500).send('Error loading page: ' + err.message);
   }
 });
 
