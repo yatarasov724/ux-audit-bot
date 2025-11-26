@@ -32,9 +32,10 @@ const port = process.env.PORT || 3000;
 
 console.log(`Server port: ${port}`);
 
-// Request logging middleware
+// Request logging middleware - log ALL requests
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - IP: ${req.ip} - Host: ${req.get('host')}`);
+  console.log(`Request headers:`, JSON.stringify(req.headers, null, 2));
   next();
 });
 
@@ -181,6 +182,11 @@ app.get('/health', (req, res) => {
 
 // Serve index.html for root route FIRST (before static files)
 app.get('/', (req, res) => {
+  console.log('=== ROOT ROUTE HANDLER CALLED ===');
+  console.log('Request URL:', req.url);
+  console.log('Request path:', req.path);
+  console.log('Request originalUrl:', req.originalUrl);
+  
   try {
     const indexPath = path.join(__dirname, 'public', 'index.html');
     console.log('Serving index.html from:', indexPath);
@@ -188,23 +194,36 @@ app.get('/', (req, res) => {
     
     // Check if file exists
     const fs = require('fs');
-    if (!fs.existsSync(indexPath)) {
+    const fileExists = fs.existsSync(indexPath);
+    console.log('File exists:', fileExists);
+    
+    if (!fileExists) {
       console.error('index.html not found at:', indexPath);
-      return res.status(404).send('index.html not found');
+      // List files in public directory
+      const publicDir = path.join(__dirname, 'public');
+      console.log('Public directory:', publicDir);
+      if (fs.existsSync(publicDir)) {
+        const files = fs.readdirSync(publicDir);
+        console.log('Files in public directory:', files);
+      }
+      return res.status(404).send('index.html not found at: ' + indexPath);
     }
     
+    console.log('Sending index.html file...');
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('Error sending index.html:', err);
+        console.error('Error stack:', err.stack);
         if (!res.headersSent) {
           res.status(500).send('Error loading page: ' + err.message);
         }
       } else {
-        console.log('index.html sent successfully');
+        console.log('✅ index.html sent successfully');
       }
     });
   } catch (err) {
     console.error('Error serving index.html:', err);
+    console.error('Error stack:', err.stack);
     if (!res.headersSent) {
       res.status(500).send('Error loading page: ' + err.message);
     }
