@@ -1,7 +1,25 @@
 const express = require('express');
 const path = require('path');
-const { runAudit, runLighthouse } = require('./utils/audit');
-const { runUXAudit } = require('./utils/ux-audit');
+
+// Load utilities with error handling
+let runAudit, runLighthouse, runUXAudit;
+try {
+  const auditUtils = require('./utils/audit');
+  runAudit = auditUtils.runAudit;
+  runLighthouse = auditUtils.runLighthouse;
+} catch (err) {
+  console.error('Error loading audit utils:', err);
+  // Will be handled when endpoints are called
+}
+
+try {
+  const uxAuditUtils = require('./utils/ux-audit');
+  runUXAudit = uxAuditUtils.runUXAudit;
+} catch (err) {
+  console.error('Error loading UX audit utils:', err);
+  // Will be handled when endpoints are called
+}
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -50,9 +68,13 @@ app.get('/api/audit', async (req, res) => {
   }
 
   try {
+    if (!runAudit) {
+      throw new Error('Audit module not loaded');
+    }
     const result = await runAudit(normalizedUrl, platform, validLang);
     res.status(200).json(result);
   } catch (err) {
+    console.error('Audit error:', err);
     res.status(500).json({ error: translations.api.auditFailed, details: err.message });
   }
 });
@@ -72,6 +94,9 @@ app.get('/api/lighthouse', async (req, res) => {
   const normalizedUrl = normalizeUrl(url);
 
   try {
+    if (!runLighthouse) {
+      throw new Error('Lighthouse module not loaded');
+    }
     console.log(`Starting Lighthouse audit for: ${normalizedUrl}`);
     const result = await runLighthouse(normalizedUrl, validLang);
     console.log(`Lighthouse audit completed for: ${normalizedUrl}`);
@@ -101,6 +126,9 @@ app.get('/api/ux-audit', async (req, res) => {
   const normalizedUrl = normalizeUrl(url);
 
   try {
+    if (!runUXAudit) {
+      throw new Error('UX audit module not loaded');
+    }
     console.log(`Starting UX audit for: ${normalizedUrl}`);
     const result = await runUXAudit(normalizedUrl, validLang);
     console.log(`UX audit completed for: ${normalizedUrl}`);
@@ -115,15 +143,39 @@ app.get('/api/ux-audit', async (req, res) => {
   }
 });
 
+// Healthcheck endpoint (simple and fast)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Serve static files AFTER API routes
 app.use('/lang', express.static('lang')); // Serve translation files
 app.use(express.static('public')); // Serve static files from public directory
 
 // Serve index.html for root route (fallback)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  try {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  } catch (err) {
+    console.error('Error serving index.html:', err);
+    res.status(500).send('Error loading page');
+  }
 });
 
-app.listen(port, () => {
-  console.log(`Бот UX‑аудита запущен на http://localhost:${port}`);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error', message: err.message });
 });
+
+// Start server with error handling
+try {
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Бот UX‑аудита запущен на http://0.0.0.0:${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`PORT: ${port}`);
+  });
+} catch (err) {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+}
