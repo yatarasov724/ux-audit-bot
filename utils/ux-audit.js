@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+// puppeteer may be an ES module, will be imported dynamically
 
 // Helper function to wait (replacement for deprecated waitForTimeout)
 function wait(ms) {
@@ -53,8 +53,11 @@ async function runUXAudit(url, lang = 'ru') {
       throw new Error(`Invalid URL format: ${url}`);
     }
 
+    // Dynamically import puppeteer (may be ES module)
+    const puppeteer = await import('puppeteer');
+    
     console.log('Launching browser for UX audit...');
-    browser = await puppeteer.launch({
+    browser = await puppeteer.default.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
