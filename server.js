@@ -30,7 +30,15 @@ try {
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Validate port
+if (!port || isNaN(port)) {
+  console.error('Invalid PORT:', port);
+  process.exit(1);
+}
+
 console.log(`Server port: ${port}`);
+console.log(`PORT type: ${typeof port}`);
+console.log(`PORT value: ${port}`);
 
 // Request logging middleware - log ALL requests
 app.use((req, res, next) => {
