@@ -243,34 +243,54 @@ app.use((err, req, res, next) => {
 // Start server with error handling
 console.log('Setting up server routes...');
 
-// Handle uncaught errors
+// Handle uncaught errors - but log them properly
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
-  // Don't exit, let the server try to continue
+  console.error('Stack:', err.stack);
+  // Keep server running but log the error
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit, let the server try to continue
+  console.error('Unhandled Rejection at:', promise);
+  console.error('Reason:', reason);
+  // Keep server running but log the error
 });
 
-try {
-  console.log(`Attempting to start server on port ${port}...`);
-  const server = app.listen(port, '0.0.0.0', () => {
-    console.log(`✅ Бот UX‑аудита запущен на http://0.0.0.0:${port}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`PORT: ${port}`);
-    console.log('Server is ready to accept connections');
-  });
+// Start server
+console.log(`Attempting to start server on port ${port}...`);
+console.log(`PORT environment variable: ${process.env.PORT}`);
+console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 
-  server.on('error', (err) => {
-    console.error('Server error:', err);
-    if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${port} is already in use`);
-    }
-  });
-} catch (err) {
-  console.error('Failed to start server:', err);
+const server = app.listen(port, '0.0.0.0', () => {
+  const address = server.address();
+  console.log(`✅ Бот UX‑аудита запущен`);
+  console.log(`Listening on: ${address.address}:${address.port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`PORT: ${port}`);
+  console.log('Server is ready to accept connections');
+  console.log(`Healthcheck endpoint: http://0.0.0.0:${port}/health`);
+});
+
+server.on('error', (err) => {
+  console.error('❌ Server error:', err);
+  console.error('Error code:', err.code);
   console.error('Error stack:', err.stack);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${port} is already in use`);
+  }
   process.exit(1);
-}
+});
+
+server.on('listening', () => {
+  const address = server.address();
+  console.log(`✅ Server is listening on ${address.address}:${address.port}`);
+});
+
+// Keep process alive
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
