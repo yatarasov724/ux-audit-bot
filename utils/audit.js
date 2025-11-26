@@ -47,8 +47,11 @@ async function runLighthouse(url, lang = 'ru') {
   let chrome = null;
   
   try {
+    console.log(`[Lighthouse] Starting audit for: ${url}`);
+    
     // Normalize URL (add https:// if missing)
     url = normalizeUrl(url);
+    console.log(`[Lighthouse] Normalized URL: ${url}`);
     
     // Validate URL format
     try {
@@ -58,22 +61,51 @@ async function runLighthouse(url, lang = 'ru') {
     }
 
     // Dynamically import chrome-launcher (ES module)
-    const chromeLauncher = await import('chrome-launcher');
+    console.log('[Lighthouse] Importing chrome-launcher...');
+    let chromeLauncher;
+    try {
+      chromeLauncher = await import('chrome-launcher');
+      console.log('[Lighthouse] chrome-launcher imported successfully');
+    } catch (err) {
+      console.error('[Lighthouse] Error importing chrome-launcher:', err);
+      throw new Error(`Failed to import chrome-launcher: ${err.message}`);
+    }
     
-    // Launch Chrome in headless mode
-    console.log('Launching Chrome...');
-    chrome = await chromeLauncher.default.launch({
-      chromeFlags: ['--headless', '--no-sandbox', '--disable-gpu']
-    });
-
-    if (!chrome || !chrome.port) {
-      throw new Error('Failed to launch Chrome instance');
+    // Launch Chrome in headless mode with additional flags for Railway/Docker
+    console.log('[Lighthouse] Launching Chrome...');
+    try {
+      chrome = await chromeLauncher.default.launch({
+        chromeFlags: [
+          '--headless',
+          '--no-sandbox',
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-setuid-sandbox',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process'
+        ]
+      });
+    } catch (err) {
+      console.error('[Lighthouse] Error launching Chrome:', err);
+      throw new Error(`Failed to launch Chrome: ${err.message}`);
     }
 
-    console.log(`Chrome launched on port ${chrome.port}`);
+    if (!chrome || !chrome.port) {
+      throw new Error('Failed to launch Chrome instance - no port assigned');
+    }
+
+    console.log(`[Lighthouse] Chrome launched successfully on port ${chrome.port}`);
 
     // Dynamically import Lighthouse (ES module)
-    const lighthouse = await import('lighthouse');
+    console.log('[Lighthouse] Importing Lighthouse...');
+    let lighthouse;
+    try {
+      lighthouse = await import('lighthouse');
+      console.log('[Lighthouse] Lighthouse imported successfully');
+    } catch (err) {
+      console.error('[Lighthouse] Error importing Lighthouse:', err);
+      throw new Error(`Failed to import Lighthouse: ${err.message}`);
+    }
 
     // Run Lighthouse
     const options = {
@@ -83,8 +115,17 @@ async function runLighthouse(url, lang = 'ru') {
       port: chrome.port
     };
 
-    console.log(`Running Lighthouse for: ${url}`);
-    const runnerResult = await lighthouse.default(url, options);
+    console.log(`[Lighthouse] Running Lighthouse audit for: ${url}`);
+    console.log(`[Lighthouse] Options:`, JSON.stringify(options, null, 2));
+    
+    let runnerResult;
+    try {
+      runnerResult = await lighthouse.default(url, options);
+      console.log('[Lighthouse] Lighthouse audit completed');
+    } catch (err) {
+      console.error('[Lighthouse] Error running Lighthouse:', err);
+      throw new Error(`Lighthouse audit failed: ${err.message}`);
+    }
 
     if (!runnerResult || !runnerResult.lhr) {
       throw new Error('Lighthouse returned invalid results');
@@ -196,16 +237,18 @@ async function runLighthouse(url, lang = 'ru') {
     console.log('Lighthouse audit completed successfully');
     return result;
   } catch (error) {
-    console.error('Lighthouse error details:', error);
+    console.error('[Lighthouse] Error details:', error);
+    console.error('[Lighthouse] Error stack:', error.stack);
     throw new Error(`Lighthouse audit failed: ${error.message}`);
   } finally {
     // Close Chrome instance
     if (chrome) {
       try {
+        console.log('[Lighthouse] Closing Chrome instance...');
         await chrome.kill();
-        console.log('Chrome instance closed');
+        console.log('[Lighthouse] Chrome instance closed successfully');
       } catch (killError) {
-        console.error('Error closing Chrome:', killError);
+        console.error('[Lighthouse] Error closing Chrome:', killError);
       }
     }
   }
